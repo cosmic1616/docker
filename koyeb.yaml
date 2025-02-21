@@ -10,5 +10,5 @@ services:
     env:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
     ports:
-      - port: 8080
-        internal_port: 8080
+      - port: 80
+        internal_port: 80
