@@ -10,6 +10,8 @@ from telegram.ext import (
 )
 from mega import Mega
 import os
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from threading import Thread
 
 # Enable logging
 logging.basicConfig(
@@ -46,6 +48,7 @@ async def password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     try:
         m = mega.login(email, password)
         files = m.get_files()
+        logger.info("Files retrieved: %s", files)
         for file in files:
             if 'a' in files[file]:
                 file_name = files[file]['a']['n']
@@ -55,7 +58,7 @@ async def password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text('All files have been renamed successfully!')
     except Exception as e:
         logger.error("Error: %s", e)
-        await update.message.reply_text('There was an error renaming the files. Please try again.')
+        await update.message.reply_text('There was an error renaming the files. Please check the logs.')
 
     return ConversationHandler.END
 
@@ -66,7 +69,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text('Bye! I hope we can talk again some day.')
     return ConversationHandler.END
 
-def main() -> None:
+def run_telegram_bot() -> None:
     """Run the bot."""
     # Create the Application and pass it your bot's token.
     application = ApplicationBuilder().token(os.getenv("TELEGRAM_BOT_TOKEN")).build()
@@ -86,5 +89,18 @@ def main() -> None:
     # Start the Bot
     application.run_polling()
 
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        self.wfile.write(b'OK')
+
+def run_health_check_server():
+    server_address = ('', 8080)
+    httpd = HTTPServer(server_address, HealthCheckHandler)
+    httpd.serve_forever()
+
 if __name__ == '__main__':
-    main()
+    Thread(target=run_telegram_bot).start()
+    run_health_check_server()
