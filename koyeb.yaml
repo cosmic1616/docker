@@ -1,0 +1,14 @@
+name: telegram-mega-bot
+description: A Telegram bot to rename files in a MEGA.nz account.
+
+services:
+  - name: telegram-mega-bot-service
+    type: docker
+    source:
+      image:
+        dockerfile_path: ./Dockerfile
+    env:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+    ports:
+      - port: 80
+        internal_port: 80
